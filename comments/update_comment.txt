@@ -1,0 +1,7 @@
+Hi!
+
+I just updated your mod here: http://moddota.com/moddb/#{0}
+
+---
+
+^[[Help](http://www.reddit.com//r/dota2modding/wiki/)] ^| ^[[Mail](http://www.reddit.com/message/compose/?to=DarkMio&amp;subject=BotReport) ^[Botowner](http://www.reddit.com/message/compose/?to=DarkMio&amp;subject=BotReport)] ^| ^[[Bot](http://reddit.com/r/dota2modding/) ^[Changelog](http://reddit.com/r/dota2modding/)]

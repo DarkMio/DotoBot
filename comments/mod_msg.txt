@@ -1,0 +1,1 @@
+This content isn't flaired: [{1}](http://redd.it/{0})

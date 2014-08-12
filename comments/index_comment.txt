@@ -1,0 +1,24 @@
+Hi, I am /u/DotoBot and help out here.
+
+I just indexed your mod on [moddota.com](http://moddota.com).
+
+
+Also I am providing your personal **mod id: {0}**"
+
+---
+
+#What does this bot do?
+
+> I wrote your mod into our database over on [moddota.com](http://moddota.com/moddb/), where you can browse all kinds of mods easily - you can find your submission here: http://moddota.com/moddb/#{1}
+
+#How do I update my mod?
+
+> That's easy. Just give your thread an "Update" linkflair and provide your 8-digit mod id somewhere in your self.post. I check your linkflair and read the mod id, check it with our database and change the content in it.
+
+#What does the mod id and why isn't it hidden?
+
+> The mod id is a feature from us for you. If you want to update your mod after a while, let's say there are big changes in your map or gamemode, we want to keep our database as fresh as possible. But to prevent that you mistakenly overwrite another mod you created, you have to provide the mod id. It even doesn't matter where you do it, it just have to be the number anywhere in your new submission. Only you, this means your reddit-account can update the entry in the database with this method.
+
+---
+
+^[[Help](http://www.reddit.com//r/dota2modding/wiki/)] ^| ^[[Mail](http://www.reddit.com/message/compose/?to=DarkMio&amp;subject=BotReport) ^[Botowner](http://www.reddit.com/message/compose/?to=DarkMio&amp;subject=BotReport)] ^| ^[[Bot](http://reddit.com/r/dota2modding/) ^[Changelog](http://reddit.com/r/dota2modding/)]

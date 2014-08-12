@@ -1,33 +1,14 @@
-# This code is sloppy and just retries itself without printing any error.
-# This works well for a hosted python server, but shouldn't be used on a
-# dev-machine, since you will get no errors.
-# This bot usually gets after a few hours for a few seconds in trouble,
-# restarting one of the streams. That is a connection-error of reddit,
-# just ignore it.
-# Have fun.
-
-
 import praw
-import datetime
-import random
-import sqlite3
-import threading
-import re
-import logging
-import traceback
-import urllib2
-import argparse
 from ConfigParser import ConfigParser
+from time import time
+from database import database
+import log
 
-from time import time, sleep
+from pprint import pprint
 
-class multithread(object):
+class dotobot(object):
 
 	def __init__(self):
-		self.running = True
-		self.threads = []
-
-
 		config = ConfigParser()
 		config.read('config.ini')
 
@@ -42,106 +23,115 @@ class multithread(object):
 
 		self.subreddit = subreddit
 		self.now = int(time())
+		
+
 		# best handling without formatting is to not format it.
 
-		self.comment = "Here could be your comment."
+
+		self.db = database()
+
+
+		self.flairs_submission = ["Soundmod", "Iconmod", "Heromod", "Announcer", "Gamemode", "Map", "Software"]
+		self.flairs_update = ["Update"]
+		self.flairs_good = self.flairs_submission + self.flairs_update
+
+
+		with open('comments/index_comment.txt', 'r') as f:
+			self.index_comment = f.read()
+		with open('comments/update_comment.txt', 'r') as f:
+			self.update_comment = f.read()
+
+	def tasklist_worker(self, age):
+		task = self.db.load_tasklist(age)
+		for column in task:
+			submission = self.r.get_submission(submission_id=column[1])
+			if any(str(submission.link_flair_text) in s for s in self.flairs_good):
+				if banned_by:
+					# If a submission is deleted by a moderator, the bot will skip it.
+					self.db.update_flair('deleted', submission.id)
+					continue
+				if submission.approved_by and age == 0:
+					if any(str(submission.link_flair_text) in s for s in self.flairs_submission):
+						# if a submission fits in the index-criteria, the bot will index it.
+						self.db.index_submission(submission)
+						self.db.update_flair(submission.link_flair_text, submission.id)
+
+					elif any(str(submission.link_flair_text) in s for s in self.flairs_update):
+						# if a submission fit in the update-critera, the bot will update it.
+						self.db.update_submission(some_vars_need_to_be_here)
+				elif age == 1:
+					# Do I need to send a message? How do I make that DRY?
+					msg = self.user_interaction('modmsg', submission.id, submission.title)
+					self.r.send_message('/r/dota2modding', 'No flaired content!', msg)
+					self.db.messaged_moderator(some_vars_go_here)
+				else:
+					pass
+			elif submission.link_flair_text == None and column[4]:
+				self.r_send_message(submission.author, 'Title goes here.', 'message goes here')
+				self.db.update_messaged_user(vars_goes_here)
+			else:
+				self.db.flair_crap(vars_goes_here)
+		self.tasklist_worker(1)
+
+	def user_interaction(self, text_type, shortlink, rand_int=None, title=None):
+		'''Loads responses and builds some, based on the content-need.'''
+		# depricated
+		if text_type == 'index':
+			with open('comments/index_comment.txt', 'r') as f:
+				index_comment = f.read()
+			cmt = index_comment.format(rand_int, shortlink)
+			return cmt
+		
+		if text_type == 'update':
+			with open('comments/update_comment.txt', 'r') as f:
+				update_comment = f.read()
+			cmt = update_comment.format(shortlink)
+			return cmt
+
+		if text_type == 'modmsg':
+			with open('comments/mod_msg.txt', 'r') as f:
+				mod_msg = f.read()
+			msg = mod_msg.format(shortlink, title)
+			return msg
+
+		if text_type == 'usrmsg':
+			with open('comments/usr_msg.txt', 'r') as f:
+				mod_msg = f.read()
+			msg = mod_msg.format(shortlink, title)
+			return msg
 
 
 
-	def submission_stream(self):
-		"""Checks all submissions. Either they're link.posts or self.posts. Either way, we catch both."""
-		while True:
+	def index_submission(self, submission):
+		'''This should check a submission and index it into the database.'''
 
-			try:
-				submission_stream = praw.helpers.submission_stream(self.r, self.subreddit, limit=None, verbosity=0)
-				log.info("Opened submission stream successfully.")
-				while self.running == True:
-					submission = next(submission_stream) # retrieve the next submission
+		logger.info('Indexing %s in database.')
+		sid = randint(10000000, 99999999)
+		try:
+			db.write_submission(submission.author, submission.id, submission.title, submission.selftext, submission.link_flair_text, sid)
+		except mysql.MySQLError, err:
+			logger.error('Failed at indexing {0} in database, following reason was given:'.format(submission.id))
+			logger.error(str(err))
 
-					if (submission.approved_by
-						and not check(submission.id)
-						):
-						p.index_reddit(submission)
-
+		reply = self.index_comment.format(sid, submission.id)
+		return reply
 
 
-			except:
-				log.info("Submission stream broke. Retrying in 60.")
-				log.debug(traceback.print_exc())
-				sleep(60)
-				pass
-			
-
-	def database_cleaner(self):
-		"""Cleans up the database, which contains worked-through IDs."""
-		while self.running == True:
-
-			deleteme = cur.execute("SELECT * FROM reddit WHERE time + 86400 < %s" % self.now)
-			i = 0
-			if deleteme:
-				for i, entry in enumerate(cur.fetchall()):
-					cur.execute("DELETE FROM reddit WHERE id = '%s'" % entry[1])
-					i += 0
-				i > 0 and log.info("Cleaned %s entries from the database." % i)
-
-			sleep(3600)
+	def update_reddit(self, submission):
+		logger.info('Loading all entries from /u/{0}'.format(submission.author))
+		db.query('')
 
 
-	def close(self):
-		db.close()
-		log.error("CRITICAL ERROR:")
-		log.debug(traceback.print_exc())
-		log.info("Established connection to database was closed.")
-		raise SystemExit
+	def wikify_it(self, textbody):
+		pass
 
-
-	def go(self):
-		t1 = threading.Thread(target=self.comment_stream)
-		t2 = threading.Thread(target=self.submission_stream)
-		t3 = threading.Thread(target=self.database_cleaner)
-		# Make threads daemonic, i.e. terminate them when main thread
-		# terminates. From: http://stackoverflow.com/a/3788243/145400
-		t1.daemon = True
-		t2.daemon = True
-		t3.daemon = True
-		t1.start()
-		t2.start()
-		t3.start()
-		self.threads.append(t1)
-		self.threads.append(t2)
-		self.threads.append(t3)
-
-
-def join_threads(threads):
-	"""
-	Join threads in interruptable fashion.
-	From http://stackoverflow.com/a/9790882/145400
-	"""
-	for t in threads:
-		while t.isAlive():
-			t.join(5)
 
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='DotoBot deals with database and moderation-processes in /r/Dota2Modding.')
-	parser.add_argument('--verbose', action='store_true', help='Print mainly tracebacks.')
-	args = parser.parse_args()
+	logger = log.setup_custom_logger('root')
 
-	# SET UP LOGGER
-	logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%X', level=logging.DEBUG if args.verbose else logging.INFO)
-	log = logging.getLogger(__name__)
-	log.addFilter(NoParsingFilter())
+	bot = dotobot()
 
-	# SET UP DATABASE
-	db = sqlite3.connect('massdrop.db', check_same_thread=False, isolation_level=None)
-	cur = db.cursor()
+	#bot.tasklist_worker(0)
 
-	t = multithread()
-
-	t.go()
-	try:
-		join_threads(t.threads)
-	except KeyboardInterrupt:
-		log.info("Stopping process entirely.")
-		db.close() # you can't close it enough, seriously.
-		log.info("Established connection to database was closed.")
+	print bot.user_interaction('usrmsg', '2ctqx5', title='This is some title.')
