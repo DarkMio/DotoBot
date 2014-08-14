@@ -25,9 +25,6 @@ class dotobot(object):
 		self.now = int(time())
 		
 
-		# best handling without formatting is to not format it.
-
-
 		self.db = database()
 
 
@@ -124,6 +121,15 @@ class dotobot(object):
 
 	def wikify_it(self, textbody):
 		pass
+
+
+class db_worker(object):
+	'''db_worker takes care of the maintance of the database,
+		additionally he writes out the JSON for the mod-database
+		and helps us splitting I/O aswell as interfacing with the DB.'''
+
+	def __init__(self):
+		# How JSON should look like: [{usr, shortlink, descr, content, type}, {}, {},]
 
 
 
